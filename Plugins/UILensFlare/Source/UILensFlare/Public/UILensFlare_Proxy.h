@@ -4,29 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "UILensFlare_Flare.h"
 #include "UILensFlare_Proxy.generated.h"
-
-
-USTRUCT(BlueprintType)
-struct FUILensType
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UMaterialInstance* LensMaterial;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FVector2D ImageSize;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int DistanceIndex;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Distance;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float IntensityScale;
-};
 
 
 UCLASS()

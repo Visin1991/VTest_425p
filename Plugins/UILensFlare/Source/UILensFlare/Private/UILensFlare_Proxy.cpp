@@ -37,27 +37,23 @@ void AUILensFlare_Proxy::BeginPlay()
 	{
 		// Create Flare UI
 		// For Loop ......
-		UUILensFlare_Flare* Flare = CreateWidget<UUILensFlare_Flare>(GetWorld(), LensFlareWidgetClass);
-		if (!ensure(Flare != nullptr))return;
-		if (!ensure(Flare->LensImage != nullptr))return;
+		for (auto lensType : UILensTypes)
+		{
+			UUILensFlare_Flare* Flare = CreateWidget<UUILensFlare_Flare>(GetWorld(), LensFlareWidgetClass);
+			if (!ensure(Flare != nullptr))return;
+			if (!ensure(Flare->LensImage != nullptr))return;
 
-		//......
-		// Initiate all Material parameters and values ......
-		
-		auto slot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Flare->LensImage);
-		// auto slotSize = slot->GetSize();
-		
-		// Set Slot size......
-		// slot->SetSize(x,y);
+			//......
+			// Initiate all Material parameters and values ......
+			
+			Flare->lensType = lensType;
+			auto slot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Flare->LensImage);
+			slot->SetSize(lensType.ImageSize);
 
-
-
-		Flare->AddToViewport();
-		LensFlareWidgets.Add(Flare);
+			Flare->AddToViewport();
+			LensFlareWidgets.Add(Flare);
+		}
 	}
-
-
-	
 }
 
 void AUILensFlare_Proxy::CalculateLensFlarePosition()
@@ -72,51 +68,37 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 	FHitResult result;
 	auto actorLocation = GetActorLocation();
 	bool hitAnything = UKismetSystemLibrary::LineTraceSingle(GetWorld(), actorLocation, cameraLocation, ETraceTypeQuery::TraceTypeQuery1,false, actor2Ignore,EDrawDebugTrace::Type::None, result,true);
-	if (hitAnything) {
+	if (hitAnything)
+	{
 		visibilityIntensity = 0;
 	}
 	
 	//Set Visibility Intensity for all Materials
-
-	FVector2D outScreenPos;
-	bool validProjection = UGameplayStatics::ProjectWorldToScreen(controller, actorLocation, outScreenPos, false);
-	auto viewportScale = UWidgetLayoutLibrary::GetViewportScale(this);
-	auto viewportSize = UWidgetLayoutLibrary::GetViewportSize(this)/viewportScale;
+	FVector2D lightSourceScreenPos;
+	bool validProjection = UGameplayStatics::ProjectWorldToScreen(controller, actorLocation, lightSourceScreenPos, false);
+	float viewportScale = UWidgetLayoutLibrary::GetViewportScale(this);
+	FVector2D viewportSize = UWidgetLayoutLibrary::GetViewportSize(this)/viewportScale;
 	auto screenCenter = viewportSize * 0.5f;
-	outScreenPos = outScreenPos/viewportScale;
-	auto lightsource2Center = outScreenPos - screenCenter;
+	lightSourceScreenPos = lightSourceScreenPos /viewportScale;
+	auto lightsource2Center = lightSourceScreenPos - screenCenter;
 
-	if (!validProjection)
-	{
-		// If Projection failed, hide all Lens Flare Widget
-
+	if (!validProjection) //If Projection failed, hide all Lens Flare Widget
+	{	
 		return;
 	}
-
 
 	for (auto flare : LensFlareWidgets)
 	{
 		if (IsValid(flare))
 		{
-			auto slot = UWidgetLayoutLibrary::SlotAsCanvasSlot(flare->LensImage);
-			auto slotSize = slot->GetSize();
-
-			bool lightSource = false;
-			if (lightSource) {
-				// Position for LightSource Widget
-				slotSize = slotSize * 0.5f;	// Slot Center
-				outScreenPos = outScreenPos - slotSize;
-				flare->SetPositionInViewport(outScreenPos);
-			}
-			
-			//
-
+			// auto slot = UWidgetLayoutLibrary::SlotAsCanvasSlot(flare->LensImage);
+			// auto slotSize = slot->GetSize();
+			auto halfSlotSize = flare->lensType.ImageSize * 0.5f;
+			auto flareScreenPos = lightSourceScreenPos - halfSlotSize;
+			flareScreenPos -= lightsource2Center * flare->lensType.Scale * flare->lensType.Step;
+			flare->SetPositionInViewport(flareScreenPos,false);
 		}
 	}
-
-
-
-
 }
 
 
@@ -124,6 +106,6 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 void AUILensFlare_Proxy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	CalculateLensFlarePosition();
 }
 

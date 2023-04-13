@@ -17,10 +17,13 @@ public:
 	AUILensFlare_Proxy(const FObjectInitializer& ObjectInitializer);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Lens)
-	TArray<FUILensType> UILensTypes;
+	UCurveLinearColorAtlas* Curve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Lens)
-	UCurveLinearColorAtlas* Curve;
+	FVector2D FadeOutOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Lens)
+	TArray<FUILensType> UILensTypes;
 
 protected:
 	// Called when the game starts or when spawned
@@ -40,5 +43,4 @@ private:
 	TSubclassOf<class UUILensFlare_Flare> LensFlareWidgetClass;
 
 	TArray<UUILensFlare_Flare*> LensFlareWidgets;
-
 };

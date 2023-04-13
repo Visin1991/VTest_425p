@@ -82,11 +82,18 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 	lightSourceScreenPos = lightSourceScreenPos /viewportScale;
 	auto lightsource2Center = lightSourceScreenPos - screenCenter;
 
-	if (!validProjection) //If Projection failed, hide all Lens Flare Widget
-	{	
-		return;
+	FVector2D validHalfSize = (viewportSize + viewportSize * FadeOutOffset) * 0.5f;
+	FVector2D asbLightSource2Center = lightsource2Center.GetAbs();
+	FVector2D borderSize = validHalfSize - asbLightSource2Center;
+	if (borderSize.X < 0 || borderSize.Y < 0 || (!validProjection)) {
+		for (auto flare : LensFlareWidgets)
+		{
+			auto negDoubleSize = flare->lensType.ImageSize * -2.0f;
+			flare->SetPositionInViewport(negDoubleSize, false);
+		}
+		return;	//If Lightsource Out of Screen with fade offset, hide all Lens Flare Widget
 	}
-
+	//UE_LOG(LogTemp, Warning, TEXT("[X:%f | Y:%f]"), lightSourceScreenPos.X, lightSourceScreenPos.Y);
 	for (auto flare : LensFlareWidgets)
 	{
 		if (IsValid(flare))

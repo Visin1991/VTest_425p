@@ -43,4 +43,6 @@ private:
 	TSubclassOf<class UUILensFlare_Flare> LensFlareWidgetClass;
 
 	TArray<UUILensFlare_Flare*> LensFlareWidgets;
+
+	bool bAlreadyOutOfScreen;
 };

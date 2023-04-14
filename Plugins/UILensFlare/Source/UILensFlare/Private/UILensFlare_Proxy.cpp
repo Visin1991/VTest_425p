@@ -9,6 +9,10 @@
 #include "Components/Image.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Kismet/KismetMaterialLibrary.h"
+
+#define LightSource2CenterX "lightsource2CenterX"
+#define LightSource2CenterY "lightsource2CenterY"
 
 // Sets default values
 AUILensFlare_Proxy::AUILensFlare_Proxy(const FObjectInitializer& ObjectInitializer)
@@ -20,6 +24,7 @@ AUILensFlare_Proxy::AUILensFlare_Proxy(const FObjectInitializer& ObjectInitializ
 	if (!ensure(WBPLensFlareClass.Class != nullptr)) return;
 
 	LensFlareWidgetClass = WBPLensFlareClass.Class;
+	bAlreadyOutOfScreen = false;
 
 }
 
@@ -43,15 +48,27 @@ void AUILensFlare_Proxy::BeginPlay()
 			if (!ensure(Flare != nullptr))return;
 			if (!ensure(Flare->LensImage != nullptr))return;
 
-			//......
-			// Initiate all Material parameters and values ......
-			
 			Flare->lensType = lensType;
 			auto slot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Flare->LensImage);
 			slot->SetSize(lensType.ImageSize);
 
 			Flare->AddToViewport();
 			LensFlareWidgets.Add(Flare);
+
+			if (Flare->lensType.LensMaterial)
+			{
+				{
+					Flare->lensType.mi = UKismetMaterialLibrary::CreateDynamicMaterialInstance(this, Flare->lensType.LensMaterial);
+					if (Flare->lensType.mi)
+					{
+						for (auto parm : Flare->lensType.scalarParameters)
+						{
+							Flare->lensType.mi->SetScalarParameterValue(parm.name, parm.value);
+						}
+						Flare->LensImage->SetBrushFromMaterial(Flare->lensType.mi);
+					}
+				}
+			}
 		}
 	}
 }
@@ -68,10 +85,6 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 	FHitResult result;
 	auto actorLocation = GetActorLocation();
 	bool hitAnything = UKismetSystemLibrary::LineTraceSingle(GetWorld(), actorLocation, cameraLocation, ETraceTypeQuery::TraceTypeQuery1,false, actor2Ignore,EDrawDebugTrace::Type::None, result,true);
-	if (hitAnything)
-	{
-		visibilityIntensity = 0;
-	}
 	
 	//Set Visibility Intensity for all Materials
 	FVector2D lightSourceScreenPos;
@@ -80,19 +93,30 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 	FVector2D viewportSize = UWidgetLayoutLibrary::GetViewportSize(this)/viewportScale;
 	auto screenCenter = viewportSize * 0.5f;
 	lightSourceScreenPos = lightSourceScreenPos /viewportScale;
-	auto lightsource2Center = lightSourceScreenPos - screenCenter;
+	FVector2D lightsource2Center = lightSourceScreenPos - screenCenter;
 
 	FVector2D validHalfSize = (viewportSize + viewportSize * FadeOutOffset) * 0.5f;
 	FVector2D asbLightSource2Center = lightsource2Center.GetAbs();
 	FVector2D borderSize = validHalfSize - asbLightSource2Center;
-	if (borderSize.X < 0 || borderSize.Y < 0 || (!validProjection)) {
-		for (auto flare : LensFlareWidgets)
+
+	if (borderSize.X < 0 || borderSize.Y < 0 || (!validProjection) || hitAnything) 
+	{
+		if (!bAlreadyOutOfScreen)
 		{
-			auto negDoubleSize = flare->lensType.ImageSize * -2.0f;
-			flare->SetPositionInViewport(negDoubleSize, false);
+			// UE_LOG(LogTemp, Warning, TEXT("Light Source Out Of Screen ......"));
+			for (auto flare : LensFlareWidgets)
+			{
+				auto negDoubleSize = flare->lensType.ImageSize * -2.0f;
+				flare->SetPositionInViewport(negDoubleSize, false);
+			}
+			bAlreadyOutOfScreen = true;
 		}
 		return;	//If Lightsource Out of Screen with fade offset, hide all Lens Flare Widget
 	}
+
+	// Inside the Valid Screen......
+	bAlreadyOutOfScreen = false;
+
 	//UE_LOG(LogTemp, Warning, TEXT("[X:%f | Y:%f]"), lightSourceScreenPos.X, lightSourceScreenPos.Y);
 	for (auto flare : LensFlareWidgets)
 	{
@@ -104,10 +128,24 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 			auto flareScreenPos = lightSourceScreenPos - halfSlotSize;
 			flareScreenPos -= lightsource2Center * flare->lensType.Scale * flare->lensType.Step;
 			flare->SetPositionInViewport(flareScreenPos,false);
+
+			//Widget to Center percent......
+			if (flare->lensType.mi)
+			{
+				FVector2D widget2HalfScreenCenterPercent = (lightsource2Center / viewportSize).GetAbs() * 2;
+				//UE_LOG(LogTemp, Warning, TEXT("[X:%f | Y:%f]"), widget2HalfScreenCenterPercent.X, widget2HalfScreenCenterPercent.Y);
+				//Set Material Infos......
+				flare->lensType.mi->SetScalarParameterValue(LightSource2CenterX, widget2HalfScreenCenterPercent.X);
+				flare->lensType.mi->SetScalarParameterValue(LightSource2CenterY, widget2HalfScreenCenterPercent.Y);
+				for (auto parameter : flare->lensType.scalarParameters)
+				{
+					flare->lensType.mi->SetScalarParameterValue(parameter.name, parameter.value);
+				}
+
+			}
 		}
 	}
 }
-
 
 // Called every frame
 void AUILensFlare_Proxy::Tick(float DeltaTime)

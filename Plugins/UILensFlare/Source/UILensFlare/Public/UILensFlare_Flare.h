@@ -8,6 +8,18 @@
 
 
 USTRUCT(BlueprintType)
+struct FUILenseMaterialScalarParameter
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FName name;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float value;
+};
+
+USTRUCT(BlueprintType)
 struct FUILensType
 {
 	GENERATED_BODY()
@@ -16,6 +28,8 @@ struct FUILensType
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UMaterialInstance* LensMaterial;
+
+	UMaterialInstanceDynamic* mi;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FVector2D ImageSize;
@@ -28,6 +42,10 @@ struct FUILensType
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float Intensity;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FUILenseMaterialScalarParameter> scalarParameters;
+
 };
 
 UCLASS()

@@ -14,7 +14,7 @@
 #define LightSource2CenterX "lightsource2CenterX"
 #define LightSource2CenterY "lightsource2CenterY"
 
-// Sets default values
+// Sets default values*
 AUILensFlare_Proxy::AUILensFlare_Proxy(const FObjectInitializer& ObjectInitializer)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -106,22 +106,26 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 			// UE_LOG(LogTemp, Warning, TEXT("Light Source Out Of Screen ......"));
 			for (auto flare : LensFlareWidgets)
 			{
-				auto negDoubleSize = flare->lensType.ImageSize * -2.0f;
-				flare->SetPositionInViewport(negDoubleSize, false);
+				//auto negDoubleSize = flare->lensType.ImageSize * -2.0f;
+				//flare->SetPositionInViewport(negDoubleSize, false);
+				flare->SetVisibility(ESlateVisibility::Hidden);
 			}
 			bAlreadyOutOfScreen = true;
 		}
 		return;	//If Lightsource Out of Screen with fade offset, hide all Lens Flare Widget
 	}
 
-	// Inside the Valid Screen......
-	bAlreadyOutOfScreen = false;
-
 	//UE_LOG(LogTemp, Warning, TEXT("[X:%f | Y:%f]"), lightSourceScreenPos.X, lightSourceScreenPos.Y);
 	for (auto flare : LensFlareWidgets)
 	{
 		if (IsValid(flare))
 		{
+			// Inside the Valid Screen......
+			if (bAlreadyOutOfScreen)
+			{
+				flare->SetVisibility(ESlateVisibility::Visible);
+			}
+
 			// auto slot = UWidgetLayoutLibrary::SlotAsCanvasSlot(flare->LensImage);
 			// auto slotSize = slot->GetSize();
 			auto halfSlotSize = flare->lensType.ImageSize * 0.5f;
@@ -145,6 +149,8 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 			}
 		}
 	}
+
+	bAlreadyOutOfScreen = false;
 }
 
 // Called every frame

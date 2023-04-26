@@ -11,6 +11,7 @@ DECLARE_MULTICAST_DELEGATE_FourParams(FPP_LensFlares, FRDGBuilder&, const FViewI
 extern RENDERER_API FPP_LensFlares PP_LensFlares;
 
 class UPostProcessLensFlareAsset;
+
 /**
  * 
  */

@@ -964,140 +964,140 @@ FRDGTextureRef UPostProcessSubsystem::RenderGlare(
     const FViewInfo& View
 )
 {
-    //RDG_EVENT_SCOPE(GraphBuilder, "GlarePass");
+    RDG_EVENT_SCOPE(GraphBuilder, "GlarePass");
 
-    //FRDGTextureRef OutputTexture = nullptr;
+    FRDGTextureRef OutputTexture = nullptr;
 
-    //FIntRect Viewport4 = FIntRect(
-    //    0,
-    //    0,
-    //    View.ViewRect.Width() / 4,
-    //    View.ViewRect.Height() / 4
-    //);
+    FIntRect Viewport4 = FIntRect(
+        0,
+        0,
+        View.ViewRect.Width() / 4,
+        View.ViewRect.Height() / 4
+    );
 
-    //// Only render the Glare if its intensity is different from 0
-    //if (PostProcessAsset->GlareIntensity > SMALL_NUMBER)
-    //{
-    //    const FString PassName("LensFlareGlare");
+    // Only render the Glare if its intensity is different from 0
+    if (PostProcessAsset->GlareIntensity > SMALL_NUMBER)
+    {
+        const FString PassName("LensFlareGlare");
 
-    //    // This compute the number of point that will be drawn
-    //    // Since we want one point for 2 by 2 pixel block we just 
-    //    // need to divide the resolution by two to get this value.
-    //    FIntPoint TileCount = Viewport4.Size();
-    //    TileCount.X = TileCount.X / 2;
-    //    TileCount.Y = TileCount.Y / 2;
-    //    int32 Amount = TileCount.X * TileCount.Y;
+        // This compute the number of point that will be drawn
+        // Since we want one point for 2 by 2 pixel block we just 
+        // need to divide the resolution by two to get this value.
+        FIntPoint TileCount = Viewport4.Size();
+        TileCount.X = TileCount.X / 2;
+        TileCount.Y = TileCount.Y / 2;
+        int32 Amount = TileCount.X * TileCount.Y;
 
-    //    // Compute the ratio between the width and height
-    //    // to know how to adjust the scaling of the quads.
-    //    // (This assume width is bigger than height.)
-    //    FVector2D BufferRatio = FVector2D(
-    //        float(Viewport4.Height()) / float(Viewport4.Width()),
-    //        1.0f
-    //    );
+        // Compute the ratio between the width and height
+        // to know how to adjust the scaling of the quads.
+        // (This assume width is bigger than height.)
+        FVector2D BufferRatio = FVector2D(
+            float(Viewport4.Height()) / float(Viewport4.Width()),
+            1.0f
+        );
 
-    //    // Build the buffer
-    //    FRDGTextureDesc Description = InputTexture->Desc;
-    //    Description.Reset();
-    //    Description.Extent = Viewport4.Size();
-    //    Description.Format = PF_FloatRGB;
-    //    Description.ClearValue = FClearValueBinding(FLinearColor::Transparent);
-    //    FRDGTextureRef GlareTexture = GraphBuilder.CreateTexture(Description, *PassName);
+        // Build the buffer
+        FRDGTextureDesc Description = InputTexture->Desc;
+        Description.Reset();
+        Description.Extent = Viewport4.Size();
+        Description.Format = PF_FloatRGB;
+        Description.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+        FRDGTextureRef GlareTexture = GraphBuilder.CreateTexture(Description, *PassName);
 
-    //    // Setup a few other variables that will 
-    //    // be needed by the shaders.
-    //    FVector4 PixelSize = FVector4(0, 0, 0, 0);
-    //    PixelSize.X = 1.0f / float(Viewport4.Width());
-    //    PixelSize.Y = 1.0f / float(Viewport4.Height());
-    //    PixelSize.Z = PixelSize.X;
-    //    PixelSize.W = PixelSize.Y * -1.0f;
+        // Setup a few other variables that will 
+        // be needed by the shaders.
+        FVector4 PixelSize = FVector4(0, 0, 0, 0);
+        PixelSize.X = 1.0f / float(Viewport4.Width());
+        PixelSize.Y = 1.0f / float(Viewport4.Height());
+        PixelSize.Z = PixelSize.X;
+        PixelSize.W = PixelSize.Y * -1.0f;
 
-    //    FVector2D BufferSize = FVector2D(Description.Extent);
+        FVector2D BufferSize = FVector2D(Description.Extent);
 
-    //    // Setup shader
-    //    FCustomLensFlarePassParameters* PassParameters = GraphBuilder.AllocParameters<FCustomLensFlarePassParameters>();
-    //    PassParameters->InputTexture = InputTexture;
-    //    PassParameters->RenderTargets[0] = FRenderTargetBinding(GlareTexture, ERenderTargetLoadAction::EClear);
+        // Setup shader
+        FCustomLensFlarePassParameters* PassParameters = GraphBuilder.AllocParameters<FCustomLensFlarePassParameters>();
+        PassParameters->InputTexture = InputTexture;
+        PassParameters->RenderTargets[0] = FRenderTargetBinding(GlareTexture, ERenderTargetLoadAction::EClear);
 
-    //    // Vertex shader
-    //    FLensFlareGlareVS::FParameters VertexParameters;
-    //    VertexParameters.Pass = *PassParameters;
-    //    VertexParameters.InputSampler = BilinearBorderSampler;
-    //    VertexParameters.TileCount = TileCount;
-    //    VertexParameters.PixelSize = PixelSize;
-    //    VertexParameters.BufferSize = BufferSize;
+        // Vertex shader
+        FLensFlareGlareVS::FParameters VertexParameters;
+        VertexParameters.Pass = *PassParameters;
+        VertexParameters.InputSampler = BilinearBorderSampler;
+        VertexParameters.TileCount = TileCount;
+        VertexParameters.PixelSize = PixelSize;
+        VertexParameters.BufferSize = BufferSize;
 
-    //    // Geometry shader
-    //    FLensFlareGlareGS::FParameters GeometryParameters;
-    //    GeometryParameters.BufferSize = BufferSize;
-    //    GeometryParameters.BufferRatio = BufferRatio;
-    //    GeometryParameters.PixelSize = PixelSize;
-    //    GeometryParameters.GlareIntensity = PostProcessAsset->GlareIntensity;
-    //    GeometryParameters.GlareTint = FVector4(PostProcessAsset->GlareTint);
-    //    GeometryParameters.GlareScales[0] = PostProcessAsset->GlareScale.X;
-    //    GeometryParameters.GlareScales[1] = PostProcessAsset->GlareScale.Y;
-    //    GeometryParameters.GlareScales[2] = PostProcessAsset->GlareScale.Z;
-    //    GeometryParameters.GlareDivider = FMath::Max(PostProcessAsset->GlareDivider, 0.01f);
+        // Geometry shader
+        FLensFlareGlareGS::FParameters GeometryParameters;
+        GeometryParameters.BufferSize = BufferSize;
+        GeometryParameters.BufferRatio = BufferRatio;
+        GeometryParameters.PixelSize = PixelSize;
+        GeometryParameters.GlareIntensity = PostProcessAsset->GlareIntensity;
+        GeometryParameters.GlareTint = FVector4(PostProcessAsset->GlareTint);
+        GeometryParameters.GlareScales[0] = PostProcessAsset->GlareScale.X;
+        GeometryParameters.GlareScales[1] = PostProcessAsset->GlareScale.Y;
+        GeometryParameters.GlareScales[2] = PostProcessAsset->GlareScale.Z;
+        GeometryParameters.GlareDivider = FMath::Max(PostProcessAsset->GlareDivider, 0.01f);
 
-    //    // Pixel shader
-    //    FLensFlareGlarePS::FParameters PixelParameters;
-    //    PixelParameters.GlareSampler = BilinearClampSampler;
-    //    PixelParameters.GlareTexture = GWhiteTexture->TextureRHI;
+        // Pixel shader
+        FLensFlareGlarePS::FParameters PixelParameters;
+        PixelParameters.GlareSampler = BilinearClampSampler;
+        PixelParameters.GlareTexture = GWhiteTexture->TextureRHI;
 
-    //    if (PostProcessAsset->GlareLineMask != nullptr)
-    //    {
-    //        const FTextureRHIRef TextureRHI = PostProcessAsset->GlareLineMask->Resource->TextureRHI;
-    //        PixelParameters.GlareTexture = TextureRHI;
-    //    }
+        if (PostProcessAsset->GlareLineMask != nullptr)
+        {
+            const FTextureRHIRef TextureRHI = PostProcessAsset->GlareLineMask->Resource->TextureRHI;
+            PixelParameters.GlareTexture = TextureRHI;
+        }
 
-    //    TShaderMapRef<FLensFlareGlareVS> VertexShader(View.ShaderMap);
-    //    TShaderMapRef<FLensFlareGlareGS> GeometryShader(View.ShaderMap);
-    //    TShaderMapRef<FLensFlareGlarePS> PixelShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareGlareVS> VertexShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareGlareGS> GeometryShader(View.ShaderMap);
+        TShaderMapRef<FLensFlareGlarePS> PixelShader(View.ShaderMap);
 
-    //    // Required for Lambda capture
-    //    FRHIBlendState* BlendState = this->AdditiveBlendState;
+        // Required for Lambda capture
+        FRHIBlendState* BlendState = this->AdditiveBlendState;
 
-    //    GraphBuilder.AddPass(
-    //        RDG_EVENT_NAME("%s", *PassName),
-    //        PassParameters,
-    //        ERDGPassFlags::Raster,
-    //        [
-    //            VertexShader, VertexParameters,
-    //            GeometryShader, GeometryParameters,
-    //            PixelShader, PixelParameters,
-    //            BlendState, Viewport4, Amount
-    //        ] (FRHICommandListImmediate& RHICmdList)
-    //        {
-    //            RHICmdList.SetViewport(
-    //                Viewport4.Min.X, Viewport4.Min.Y, 0.0f,
-    //                Viewport4.Max.X, Viewport4.Max.Y, 1.0f
-    //            );
+        GraphBuilder.AddPass(
+            RDG_EVENT_NAME("%s", *PassName),
+            PassParameters,
+            ERDGPassFlags::Raster,
+            [
+                VertexShader, VertexParameters,
+                GeometryShader, GeometryParameters,
+                PixelShader, PixelParameters,
+                BlendState, Viewport4, Amount
+            ] (FRHICommandListImmediate& RHICmdList)
+            {
+                RHICmdList.SetViewport(
+                    Viewport4.Min.X, Viewport4.Min.Y, 0.0f,
+                    Viewport4.Max.X, Viewport4.Max.Y, 1.0f
+                );
 
-    //            FGraphicsPipelineStateInitializer GraphicsPSOInit;
-    //            RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
-    //            GraphicsPSOInit.BlendState = BlendState;
-    //            GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
-    //            GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
-    //            GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GEmptyVertexDeclaration.VertexDeclarationRHI;
-    //            GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
-    //            GraphicsPSOInit.BoundShaderState.GeometryShaderRHI = GeometryShader.GetGeometryShader();
-    //            GraphicsPSOInit.BoundShaderState.PixelShaderRHI = PixelShader.GetPixelShader();
-    //            GraphicsPSOInit.PrimitiveType = PT_PointList;
-    //            SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
+                FGraphicsPipelineStateInitializer GraphicsPSOInit;
+                RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);
+                GraphicsPSOInit.BlendState = BlendState;
+                GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
+                GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
+                GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GEmptyVertexDeclaration.VertexDeclarationRHI;
+                GraphicsPSOInit.BoundShaderState.VertexShaderRHI = VertexShader.GetVertexShader();
+                GraphicsPSOInit.BoundShaderState.GeometryShaderRHI = GeometryShader.GetGeometryShader();
+                GraphicsPSOInit.BoundShaderState.PixelShaderRHI = PixelShader.GetPixelShader();
+                GraphicsPSOInit.PrimitiveType = PT_PointList;
+                SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
 
-    //            SetShaderParameters(RHICmdList, VertexShader, VertexShader.GetVertexShader(), VertexParameters);
-    //            SetShaderParameters(RHICmdList, GeometryShader, GeometryShader.GetGeometryShader(), GeometryParameters);
-    //            SetShaderParameters(RHICmdList, PixelShader, PixelShader.GetPixelShader(), PixelParameters);
+                SetShaderParameters(RHICmdList, VertexShader, VertexShader.GetVertexShader(), VertexParameters);
+                SetShaderParameters(RHICmdList, GeometryShader, GeometryShader.GetGeometryShader(), GeometryParameters);
+                SetShaderParameters(RHICmdList, PixelShader, PixelShader.GetPixelShader(), PixelParameters);
 
-    //            RHICmdList.SetStreamSource(0, nullptr, 0);
-    //            RHICmdList.DrawPrimitive(0, 1, Amount);
-    //        });
+                RHICmdList.SetStreamSource(0, nullptr, 0);
+                RHICmdList.DrawPrimitive(0, 1, Amount);
+            });
 
-    //    OutputTexture = GlareTexture;
+        OutputTexture = GlareTexture;
 
-    //} // End of if()
+    } // End of if()
 
-    //return OutputTexture;
+    return OutputTexture;
 
     return nullptr;
 }

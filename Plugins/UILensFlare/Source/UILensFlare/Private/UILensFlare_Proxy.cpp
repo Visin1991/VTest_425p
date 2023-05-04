@@ -137,8 +137,6 @@ void AUILensFlare_Proxy::CalculateLensFlarePosition()
 			if (flare->lensType.mi)
 			{
 				FVector2D widget2HalfScreenCenterPercent = (lightsource2Center / viewportSize).GetAbs() * 2;
-				//UE_LOG(LogTemp, Warning, TEXT("[X:%f | Y:%f]"), widget2HalfScreenCenterPercent.X, widget2HalfScreenCenterPercent.Y);
-				//Set Material Infos......
 				flare->lensType.mi->SetScalarParameterValue(LightSource2CenterX, widget2HalfScreenCenterPercent.X);
 				flare->lensType.mi->SetScalarParameterValue(LightSource2CenterY, widget2HalfScreenCenterPercent.Y);
 				for (auto parameter : flare->lensType.scalarParameters)
